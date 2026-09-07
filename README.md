@@ -1,162 +1,252 @@
-# Sayang Gacha 🎰💕
+# For My Sayang — Documentation
 
-A gacha machine web app you customize for your partner. They redeem secret codes you give them to earn tokens, pull capsules from a physics-enabled machine, and read personalized love messages hidden inside each one.
+A gacha machine web app where your partner redeems secret coupon codes for tokens, then pulls capsules to reveal love messages you wrote. Built with React + Matter.js physics, deployed on GitHub Pages. No server, no database — everything runs in the browser.
 
-No server, no database, no sign-up. Fork it, edit one config file, deploy to GitHub Pages. Done.
+**Live:** [https://deadboy18.github.io/sayang-gacha/](https://deadboy18.github.io/sayang-gacha/)
 
-![React](https://img.shields.io/badge/React-19-blue) ![Vite](https://img.shields.io/badge/Vite-6-purple) ![License](https://img.shields.io/badge/license-MIT-green)
+---
 
-## How It Works
+## Quick Start (Windows)
+
+1. Install **Node.js** from <https://nodejs.org> (LTS version).
+2. Extract the project zip.
+3. Double-click **`START.bat`**.
+4. A browser tab opens at `http://localhost:5173` — done.
+
+Press `Ctrl+C` in the terminal window to stop the app.
+
+---
+
+## How It Works — The Full Flow
 
 ```
-WELCOME SCREEN ──> REDEEM CODE ──> GACHA PLAY
-                       ▲               │
-                       └───────────────┘
-                      "redeem more codes"
+WELCOME  ──▸  REDEEM CODE  ──▸  GACHA PLAY
+                  ▲               │  ┌─────────┐
+                  └───────────────┘  │ Machine  │
+                   "redeem more"     │ Our Story│
+                                     └─────────┘
 ```
+1. **Welcome** — She sees "For My Sayang 💌" with a live-ticking counter showing how long you've been talking (months, days, hours, minutes, seconds). Clicks "Open My Surprise".
+2. **Redeem** — She types a secret code you gave her. Valid code = tokens added. Each code is single-use.
+3. **Gacha** — Two tabs: **🎰 Machine** (pull capsules, costs 1 token each) and **💬 Our Story** (your first DM recreation + milestone timeline).
+4. **Out of tokens** — A "Redeem Another Code" button appears. She can also go back any time via "+ Redeem More Codes".
+5. **Restock** — When all capsules are pulled, a "Restock" button refills them (doesn't cost tokens).
+6. **Secret message** — After she reads ALL messages, a special bonus message appears with a glowing card.
 
-1. **Welcome** - They see a love letter intro you wrote, then tap "Open My Surprise"
-2. **Redeem** - They type a secret code you gave them (in person, in a card, over text). Valid code = tokens added. Each code is single-use per session
-3. **Gacha** - Each pull costs 1 token. A capsule drops with real physics (Matter.js), they tap it, and your message appears in handwriting font with a heart burst animation
-4. **Secret ending** - After reading ALL messages, a special glowing card appears with your final message
+---
 
-## Quick Start
+## Features
 
-### Run locally (Windows)
+### 🎰 Gacha Machine
+- Matter.js 2D physics — capsules bounce and collide realistically inside the dome
+- Shake your phone to rattle the capsules (DeviceMotion API, works on iOS/Android)
+- Turn the dial to eject a random capsule
+- Tap the capsule to reveal your love note with a heart burst animation
+- Sound effects for every interaction (Web Audio API synthesis — no mp3 files needed)
 
-1. Install [Node.js](https://nodejs.org) (LTS)
-2. Clone this repo or download the zip
-3. Double-click `START.bat`
-4. Browser opens at `http://localhost:5173`
+### 💬 Our Story Tab
+- **First DM Recreation** — Reddit-style chat UI showing your actual first messages, with avatars, usernames, and timestamps
+- **Milestone Timeline** — Vertical timeline with emoji dots marking key relationship moments (first lunch, first call, first "sayang", etc.)
 
-### Run locally (Mac/Linux)
+### 🌙 Dark Mode
+- Toggle button (top-right corner) switches between light and dark themes
+- Full CSS custom property system — every colour adapts cleanly
+### ⏱️ Live Counter
+- Welcome screen shows a real-time ticking counter since your first message date
+- Displays months, days, hours, minutes, and seconds in styled boxes
+- Seconds pulse with a tick animation
 
-```bash
-npm install
-npm run dev
-```
+### 🔊 Sound Effects (Web Audio API)
+All sounds are synthesized in the browser — no audio files to load:
+| Sound     | When                        |
+|-----------|-----------------------------|
+| Coin      | Code redeemed successfully  |
+| Rattle    | Machine shakes              |
+| Drop      | Capsule lands in tray       |
+| Pop       | Capsule opened              |
+| Secret    | Bonus message revealed      |
+| Error     | Wrong code entered          |
+| Click     | Button press                |
 
-### Deploy to GitHub Pages (free hosting)
+### 📱 Shake to Rattle
+- Uses DeviceMotion API to detect phone shaking
+- Threshold-based detection with cooldown to prevent spam
+- Shakes the physics capsules inside the dome
 
-1. Fork this repo
-2. Edit `vite.config.js` and change the `base` to your repo name:
-   ```js
-   base: '/your-repo-name/',
-   ```
-3. The included GitHub Actions workflow (`.github/workflows/deploy.yml`) auto-deploys on every push to `main`
-4. Go to your repo Settings > Pages > make sure Source is set to "GitHub Actions"
-5. Your site will be live at `https://yourusername.github.io/your-repo-name/`
+---
 
-## Customization
+## The Config File — `src/config.js`
 
-Everything lives in **one file**: `src/config.js`
-
+This is the **only file you need to edit**. Save the file and the browser hot-reloads instantly.
 ### Names
 
 ```js
-herName:    "Mabel",          // Her real name, used wherever you write {name}
-petName:    "Sayang",         // Pet name, used in "For My Sayang" title
-senderName: "Your Chihuahua", // Your sign-off on message cards
+herName:    "Mabel",          // Her real name. Used in "a little note for mabel",
+                              // and anywhere you write {name} in messages.
+petName:    "Sayang",         // Pet name. Used in titles: "For My Sayang".
+senderName: "Your Chihuahua", // Your sign-off. Shown as "~ Your Chihuahua" on cards.
+```
+
+### Welcome Screen
+
+```js
+welcomeEmoji:    "💌",                              // Big bouncing emoji at top
+welcomeSubtitle: "you have a love letter",           // Small text above title
+welcomeBody:     `Hi Mabel 🤍\n\nI hid love notes...`, // Main paragraph (\n = line break)
+```
+
+### First Message Date (Live Counter)
+
+```js
+firstMessageDate: "2026-06-29",  // The date you first messaged. Counter ticks from this.
 ```
 
 ### Coupon Codes
 
 ```js
 codes: [
-  { code: "SAYANG",   tokens: 3 },
-  { code: "ILOVEYOU", tokens: 3 },
-  { code: "HOTGF",    tokens: 5 },
+  { code: "SAYANG",    tokens: 3 },
+  { code: "ILOVEYOU",  tokens: 3 },
+  { code: "MWAH",      tokens: 3 },
+  { code: "FOREVER",   tokens: 5 },
+  // ... up to 14 codes configured
 ],
 ```
-
-Each code can only be redeemed once per session. Case-insensitive. Add as many as you want.
+| Field    | What it does                                         |
+|----------|------------------------------------------------------|
+| `code`   | The text she types in. Case-insensitive.             |
+| `tokens` | How many tokens she gets from this code.             |
 
 ### Messages
 
 ```js
 messages: [
   "{name}, you're the reason I smile for no reason 💕",
-  "I still think about that first lunch together 🍣",
+  "I wish I could wrap you in a hug right now 🤗",
+  // ... up to 30 messages configured
 ],
 ```
 
-Use `{name}` anywhere and it auto-replaces with `herName`. Emojis work. No limit on how many messages you can add. They cycle through capsule colors (pink, blue, green, purple) automatically.
+- Each string = one capsule message. No limit on how many.
+- **`{name}`** is replaced with `herName` automatically.
+- They auto-cycle through capsule colours: pink → blue → green → purple → repeat.
+
+### First DM Recreation
+
+```js
+firstDM: [
+  { user: "him", name: "deadboy69420", time: "Jun 29, 4:52 PM", text: "hey! saw your post..." },
+  { user: "her", name: "Flimsy-Dog-5043", time: "Jul 3, 9:11 AM", text: "hiii sorry..." },
+  // ...
+],
+```
+
+- `user`: `"him"` (left-aligned, 💀 avatar) or `"her"` (right-aligned, 🐶 avatar)
+- Rendered as a Reddit DM-style chat thread in the "Our Story" tab
+### Milestone Timeline
+
+```js
+milestones: [
+  { emoji: "💬", date: "Jun 29", title: "First DM", sub: "deadboy69420 slid in" },
+  { emoji: "🍣", date: "Jul 15", title: "First Lunch", sub: "Sushi Zanmai 🤤" },
+  { emoji: "💕", date: "Aug 4",  title: "Mutual Confession", sub: "" },
+  // ...
+],
+```
+
+- `emoji`: displayed as the timeline dot
+- `date`: short date label
+- `title`: milestone name
+- `sub`: optional subtitle (Caveat font, italic)
 
 ### Secret Message
 
 ```js
-secretMessage: "You found them all! 🥺\nI love you. Always. 💕",
+secretMessage: "You found them all! 🥺\nEvery word was true, {name}.\nI love you. Always. 💕",
 ```
 
-Shown after every message has been read. Set to `""` to disable.
+Shown after she reads ALL messages. Set to `""` to disable.
 
-### Welcome Screen
-
-```js
-welcomeEmoji:    "💌",
-welcomeSubtitle: "you have a love letter",
-welcomeBody:     `Your intro message here...`,
-```
-
-### Colors
-
-Edit the CSS variables at the top of `src/styles.css`:
-
-```css
-:root {
-  --love: #e8567f;    /* buttons, accents, glows */
-  --bg:   #fce4ec;    /* page background */
-}
-```
+---
 
 ## Project Structure
 
 ```
 sayang-gacha/
-├── START.bat                  # Windows one-click launcher
-├── index.html                 # HTML shell
-├── package.json               # Dependencies
-├── vite.config.js             # Build config (set base path here)
 ├── .github/workflows/
-│   └── deploy.yml             # Auto-deploy to GitHub Pages
-├── public/pictures/           # Machine + capsule PNGs
-│   ├── machine-front.png
-│   ├── machine-back.png
-│   ├── dial.png
-│   ├── capsule-blue.png
-│   ├── capsule-green.png
-│   ├── capsule-pink.png
-│   └── capsule-purple.png
+│   └── deploy.yml         ← GitHub Pages auto-deploy├── START.bat              ← double-click to run locally
+├── index.html             ← HTML shell
+├── package.json           ← dependencies
+├── vite.config.js         ← build config (base: /sayang-gacha/)
+├── public/pictures/       ← machine + capsule PNGs
 └── src/
-    ├── config.js              # ⭐ THE ONE FILE YOU EDIT
-    ├── main.jsx               # App entry point
-    ├── App.jsx                # All screens and UI logic
-    ├── Machine.jsx            # Physics engine (Matter.js)
-    └── styles.css             # All visual styling
+    ├── config.js          ← ⭐ THE ONE FILE YOU EDIT
+    ├── main.jsx           ← entry point
+    ├── App.jsx            ← all screens, tabs, DM, timeline
+    ├── Machine.jsx        ← physics engine + shake detection
+    ├── sounds.js          ← Web Audio API sound effects
+    └── styles.css         ← all styling + dark mode
 ```
 
-## Tech Stack
+---
 
-| Tech | Role |
-|------|------|
-| React 19 | UI framework |
-| Vite 6 | Dev server + bundler with hot reload |
-| Matter.js | 2D physics for capsules bouncing in the dome |
-| Caveat | Google Font for handwritten message style |
+## Visual Features
 
-## State and Persistence
+| Feature                | Where                                                  |
+|------------------------|--------------------------------------------------------|
+| Floating hearts        | Background — 20 hearts drift upward continuously       |
+| Bouncing envelope      | Welcome screen — the emoji gently bounces              |
+| Live ticking counter   | Welcome screen — months/days/hrs/min/sec since first DM|
+| Glowing button         | Primary CTA buttons pulse with a pink glow             |
+| Heart burst            | 12 emoji particles explode when you open a capsule     |
+| Handwriting font       | Messages display in Caveat (Google Font)               |
+| Signed note            | "~ Your Chihuahua" under every message                 |
+| Love note counter      | "💌 3 love notes read" on the gacha screen             |
+| Secret card            | Special glowing pink card after reading ALL messages   || Dark mode toggle     | Top-right moon/sun button — full dark theme            |
+| Tabbed gacha screen  | 🎰 Machine / 💬 Our Story tabs                        |
+| Reddit DM recreation | Chat bubbles with avatars, usernames, timestamps       |
+| Milestone timeline   | Vertical timeline with emoji dots and hover effects    |
+| Shake to rattle      | Phone shake detection rattles the physics capsules     |
+| Card entrance        | All cards fade-slide in on screen transition           |
+| Pop-in animation     | Result card springs in with a bounce                   |
+| Tick pulse           | Seconds counter pulses on the welcome screen           |
 
-There is no persistence by default. Refreshing the page resets everything (tokens, used codes, read messages). This is intentional so she can replay it.
+---
 
+## Technical Stack
+
+| Tech            | Role                                              |
+|-----------------|---------------------------------------------------|
+| React 19        | UI framework                                      |
+| Vite 6          | Dev server & bundler (hot-reload on save)         |
+| Matter.js       | 2D physics (balls in the dome)                    |
+| Web Audio API   | Synthesized sound effects (no audio files)        |
+| DeviceMotion API| Phone shake detection                             |
+| Caveat          | Google Font for handwritten message style         |
+| GitHub Actions  | Auto-deploy to GitHub Pages on push               |
+
+---
+
+## State & Persistence
+
+There is **no persistence**. Refreshing resets everything (tokens, used codes, read count). This is intentional — no server needed.
 If you want persistence, add `localStorage` support for `tokens`, `usedCodes`, and `readCount` in `App.jsx`.
 
-## Ideas for Extending
+---
 
-- **Date lock** - Lock the app until a specific date (birthday, anniversary) with a countdown timer
-- **Custom capsule art** - Replace the PNGs in `public/pictures/` (transparent PNG, ~200-400px wide)
-- **localStorage** - Persist state across refreshes so she can come back to it
-- **Background music** - Auto-play a song that means something to both of you
+## Deployment
+
+### GitHub Pages (current setup)
+Push to `main` — the GitHub Actions workflow in `.github/workflows/deploy.yml` builds and deploys automatically.
+
+### Local (same Wi-Fi)
+Run `START.bat`. Find your IP with `ipconfig`. She opens `http://YOUR_IP:5173` on her phone.
+
+### Static hosting
+Run `npm run build`. Upload the `dist/` folder to Netlify (drag-and-drop) or Vercel.
+
+---
 
 ## License
 
-MIT. Do whatever you want with it. Make someone smile.
+Made with love. 💕
