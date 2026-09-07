@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import CONFIG from './config.js';
 import Machine from './Machine.jsx';
+import { playCoin, playPop, playSecret, playError, playClick } from './sounds.js';
 
 const P = import.meta.env.BASE_URL;
 const CAPSULES = [
@@ -46,6 +47,7 @@ export default function App() {
   }
 
   function handleResult(msg) {
+    playPop();
     setResult(msg);
     setReadCount((c) => {
       const next = c + 1;
@@ -59,7 +61,10 @@ export default function App() {
   function closeResult() {
     setResult(null);
     if (seenAll && CONFIG.secretMessage && !showSecret) {
-      setTimeout(() => setShowSecret(true), 400);
+      setTimeout(() => {
+        playSecret();
+        setShowSecret(true);
+      }, 400);
     }
   }
 
@@ -68,7 +73,7 @@ export default function App() {
       <FloatingHearts />
 
       <div className={`screen-fade ${screen === 'welcome' ? 'screen-fade--in' : 'screen-fade--out'}`}>
-        {screen === 'welcome' && <WelcomeScreen onStart={() => setScreen('redeem')} />}
+        {screen === 'welcome' && <WelcomeScreen onStart={() => { playClick(); setScreen('redeem'); }} />}
       </div>
 
       {screen === 'redeem' && (
@@ -79,7 +84,7 @@ export default function App() {
             setUsedCodes((prev) => [...prev, code]);
             setTokens((t) => t + amount);
           }}
-          onPlay={() => setScreen('gacha')}
+          onPlay={() => { playClick(); setScreen('gacha'); }}
         />
       )}
 
@@ -206,19 +211,23 @@ function RedeemScreen({ tokens, usedCodes, onRedeem, onPlay }) {
     setFeedback(null);
 
     if (!code) {
+      playError();
       setFeedback({ type: 'err', msg: `Type a code first, ${CONFIG.petName.toLowerCase()} 💭` });
       return;
     }
     if (usedCodes.includes(code)) {
+      playError();
       setFeedback({ type: 'err', msg: 'Already used this one! Try another 😋' });
       return;
     }
     const amount = CODE_MAP[code];
     if (!amount) {
+      playError();
       setFeedback({ type: 'err', msg: "Hmm, that doesn't work… check again? 🤔" });
       return;
     }
 
+    playCoin();
     onRedeem(code, amount);
     setFeedback({ type: 'ok', msg: `+${amount} tokens! 🎉` });
     setInput('');
@@ -324,7 +333,7 @@ function GachaScreen({ tokens, onPull, result, setResult, closeResult, onRedeem,
               <span className="result-deco">💌</span>
               <p className="eyebrow eyebrow--love">a little note for {CONFIG.herName.toLowerCase()}</p>
               <p className="result-msg">{result.text}</p>
-              <p className="result-sign">— {CONFIG.senderName}</p>
+              <p className="result-sign">~ {CONFIG.senderName}</p>
               <button className="btn-primary btn-full" onClick={closeResult}>
                 Close 💗
               </button>
@@ -347,7 +356,7 @@ function SecretOverlay({ onClose }) {
           <span className="result-deco secret-deco">🥺💕</span>
           <p className="eyebrow eyebrow--love">a secret message</p>
           <p className="secret-msg">{personalise(CONFIG.secretMessage)}</p>
-          <p className="result-sign">— {CONFIG.senderName} 💕</p>
+          <p className="result-sign">~ {CONFIG.senderName} 💕</p>
           <button className="btn-primary btn-full" onClick={onClose}>
             I Love You Too 💗
           </button>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Matter from 'matter-js';
+import { playRattle, playDrop } from './sounds.js';
 
 const P = import.meta.env.BASE_URL;
 const SETTLE_MS = 900, SHAKE_MS = 600, EJECT_MS = 700;
@@ -93,6 +94,7 @@ export default function Machine({ data, tokens = Infinity, onPull, onResult, res
 
   /* ── shake the balls ── */
   function shake() {
+    playRattle();
     bodiesRef.current.forEach((b, i) => {
       if (removedRef.current.has(i)) return;
       Matter.Sleeping.set(b, false);
@@ -171,6 +173,7 @@ export default function Machine({ data, tokens = Infinity, onPull, onResult, res
                                                     : ' output-capsule--falling'}`}
                  src={tray.capsule} alt=""
                  onAnimationEnd={falling ? () => {
+                   playDrop();
                    setLanded(falling); setFalling(null); setPulling(false);
                  } : undefined} />
           )}
