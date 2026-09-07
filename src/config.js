@@ -12,7 +12,7 @@ const CONFIG = {
 
   herName:    "Mabel",          // Her real name — used for personal touches
   petName:    "Sayang",         // Pet name — used in titles like "For My Sayang"
-  senderName: "Me",             // Your name / sign-off — shown on message cards
+  senderName: "Kesh",             // Your name / sign-off — shown on message cards
 
   /* ── Welcome screen ────────────────────────── */
 
