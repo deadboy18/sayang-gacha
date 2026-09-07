@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Matter from 'matter-js';
 import { playRattle, playDrop } from './sounds.js';
 
 const P = import.meta.env.BASE_URL;
 const SETTLE_MS = 900, SHAKE_MS = 600, EJECT_MS = 700;
+const SHAKE_THRESHOLD = 18;   // m/s^2 — tweak if too sensitive / not enough
+const SHAKE_COOLDOWN = 1200;  // ms between shake-rattles
 
 export default function Machine({ data, tokens = Infinity, onPull, onResult, resultVisible = false }) {
   const areaRef = useRef(null);
@@ -14,6 +16,7 @@ export default function Machine({ data, tokens = Infinity, onPull, onResult, res
   const removedRef = useRef(new Set());
   const ejectTimer = useRef(null);
   const shakeTimer = useRef(null);
+  const lastShakeRef = useRef(0);
 
   const [pullCount, setPullCount] = useState(0);
   const [remaining, setRemaining] = useState(() => data.messages.map((_, i) => i));
@@ -21,10 +24,45 @@ export default function Machine({ data, tokens = Infinity, onPull, onResult, res
   const [pulling, setPulling] = useState(false);
   const [falling, setFalling] = useState(null);
   const [landed, setLanded] = useState(null);
-
   const canPull = !pulling && remaining.length > 0 && !landed && tokens > 0;
   const canRestock = !pulling && remaining.length === 0 && !landed && !resultVisible;
 
+  /* ── shake the balls (called by dial OR phone shake) ── */
+  const shake = useCallback(() => {
+    playRattle();
+    bodiesRef.current.forEach((b, i) => {
+      if (removedRef.current.has(i)) return;
+      Matter.Sleeping.set(b, false);
+      Matter.Body.applyForce(b, b.position, {
+        x: (Math.random() - 0.5) * 0.005,
+        y: -Math.random() * 0.003,
+      });
+    });
+    shakeTimer.current = setTimeout(() => {
+      bodiesRef.current.forEach((b, i) => {
+        if (removedRef.current.has(i)) return;
+        Matter.Body.setVelocity(b, { x: 0, y: 0 });
+        Matter.Body.setAngularVelocity(b, 0);
+        Matter.Sleeping.set(b, true);
+      });
+    }, SHAKE_MS);
+  }, []);
+
+  /* ── phone shake detection (DeviceMotion) ── */
+  useEffect(() => {
+    function onMotion(e) {
+      const a = e.accelerationIncludingGravity || e.acceleration;
+      if (!a) return;
+      const mag = Math.sqrt((a.x || 0) ** 2 + (a.y || 0) ** 2 + (a.z || 0) ** 2);
+      const now = Date.now();
+      if (mag > SHAKE_THRESHOLD && now - lastShakeRef.current > SHAKE_COOLDOWN) {
+        lastShakeRef.current = now;
+        shake();
+      }
+    }
+    window.addEventListener('devicemotion', onMotion);
+    return () => window.removeEventListener('devicemotion', onMotion);
+  }, [shake]);
   /* ── physics world ── */
   useEffect(() => {
     const el = areaRef.current;
@@ -56,7 +94,6 @@ export default function Machine({ data, tokens = Infinity, onPull, onResult, res
           frictionAir: 0.06, density: 0.002, sleepThreshold: 12 },
       );
     });
-
     Matter.Composite.add(engine.world, [...walls, ...bodies]);
     bodiesRef.current = bodies;
     Matter.Runner.run(runner, engine);
@@ -91,28 +128,6 @@ export default function Machine({ data, tokens = Infinity, onPull, onResult, res
       Matter.Engine.clear(engine);
     };
   }, [data.messages, pullCount]);
-
-  /* ── shake the balls ── */
-  function shake() {
-    playRattle();
-    bodiesRef.current.forEach((b, i) => {
-      if (removedRef.current.has(i)) return;
-      Matter.Sleeping.set(b, false);
-      Matter.Body.applyForce(b, b.position, {
-        x: (Math.random() - 0.5) * 0.005,
-        y: -Math.random() * 0.003,
-      });
-    });
-    shakeTimer.current = setTimeout(() => {
-      bodiesRef.current.forEach((b, i) => {
-        if (removedRef.current.has(i)) return;
-        Matter.Body.setVelocity(b, { x: 0, y: 0 });
-        Matter.Body.setAngularVelocity(b, 0);
-        Matter.Sleeping.set(b, true);
-      });
-    }, SHAKE_MS);
-  }
-
   /* ── pull a capsule ── */
   function pull() {
     if (!canPull) return;

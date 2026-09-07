@@ -24,12 +24,30 @@ const MACHINE_DATA = {
     capsule: CAPSULES[i % 4],
   })),
 };
-
 /* normalise codes → uppercase map */
 const CODE_MAP = {};
 CONFIG.codes.forEach(({ code, tokens }) => {
   CODE_MAP[code.toUpperCase().trim()] = tokens;
 });
+
+/* live elapsed time since first message */
+function timeSince(dateStr) {
+  const start = new Date(dateStr + 'T00:00:00');
+  const now = new Date();
+  let diff = Math.max(0, now - start);
+
+  const months = Math.floor(diff / (30.44 * 86400000));
+  diff -= months * 30.44 * 86400000;
+  const days = Math.floor(diff / 86400000);
+  diff -= days * 86400000;
+  const hours = Math.floor(diff / 3600000);
+  diff -= hours * 3600000;
+  const minutes = Math.floor(diff / 60000);
+  diff -= minutes * 60000;
+  const seconds = Math.floor(diff / 1000);
+
+  return { months, days, hours, minutes, seconds };
+}
 
 /* ══════════════════════════════════════════════ */
 
@@ -41,7 +59,12 @@ export default function App() {
   const [readCount, setReadCount] = useState(0);
   const [seenAll, setSeenAll] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
+  const [dark, setDark] = useState(false);
 
+  /* dark mode toggle */
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  }, [dark]);
   function handlePull() {
     if (tokens > 0) setTokens((t) => t - 1);
   }
@@ -71,7 +94,7 @@ export default function App() {
   return (
     <>
       <FloatingHearts />
-
+      <DarkToggle dark={dark} setDark={setDark} />
       <div className={`screen-fade ${screen === 'welcome' ? 'screen-fade--in' : 'screen-fade--out'}`}>
         {screen === 'welcome' && <WelcomeScreen onStart={() => { playClick(); setScreen('redeem'); }} />}
       </div>
@@ -101,11 +124,22 @@ export default function App() {
       )}
 
       {showSecret && (
-        <SecretOverlay
-          onClose={() => setShowSecret(false)}
-        />
+        <SecretOverlay onClose={() => setShowSecret(false)} />
       )}
     </>
+  );
+}
+/* ── Dark Mode Toggle ── */
+
+function DarkToggle({ dark, setDark }) {
+  return (
+    <button
+      className="dark-toggle"
+      onClick={() => { playClick(); setDark((d) => !d); }}
+      aria-label="Toggle dark mode"
+    >
+      {dark ? '☀️' : '🌙'}
+    </button>
   );
 }
 
@@ -143,7 +177,6 @@ function FloatingHearts() {
     </div>
   );
 }
-
 /* ── Heart Burst (plays when capsule message opens) ── */
 
 function HeartBurst() {
@@ -176,12 +209,18 @@ function HeartBurst() {
     </div>
   );
 }
-
-/* ── Welcome Screen ── */
+/* ── Welcome Screen (with days-since counter) ── */
 
 function WelcomeScreen({ onStart }) {
   const [show, setShow] = useState(false);
+  const [elapsed, setElapsed] = useState(() => timeSince(CONFIG.firstMessageDate));
   useEffect(() => { requestAnimationFrame(() => setShow(true)); }, []);
+
+  /* tick every second for live counter */
+  useEffect(() => {
+    const id = setInterval(() => setElapsed(timeSince(CONFIG.firstMessageDate)), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <main className="page">
@@ -189,6 +228,18 @@ function WelcomeScreen({ onStart }) {
         <div className="welcome-envelope">{CONFIG.welcomeEmoji}</div>
         <p className="eyebrow eyebrow--love">{CONFIG.welcomeSubtitle}</p>
         <h1>For My {CONFIG.petName}</h1>
+
+        <div className="days-counter">
+          <div className="elapsed-row">
+            {elapsed.months > 0 && <div className="elapsed-unit"><span className="elapsed-num">{elapsed.months}</span><span className="elapsed-lbl">{elapsed.months === 1 ? 'month' : 'months'}</span></div>}
+            <div className="elapsed-unit"><span className="elapsed-num">{elapsed.days}</span><span className="elapsed-lbl">{elapsed.days === 1 ? 'day' : 'days'}</span></div>
+            <div className="elapsed-unit"><span className="elapsed-num">{String(elapsed.hours).padStart(2, '0')}</span><span className="elapsed-lbl">hrs</span></div>
+            <div className="elapsed-unit"><span className="elapsed-num">{String(elapsed.minutes).padStart(2, '0')}</span><span className="elapsed-lbl">min</span></div>
+            <div className="elapsed-unit"><span className="elapsed-num tick">{String(elapsed.seconds).padStart(2, '0')}</span><span className="elapsed-lbl">sec</span></div>
+          </div>
+          <span className="days-label">since our first message</span>
+        </div>
+
         <p className="welcome-body">{personalise(CONFIG.welcomeBody)}</p>
         <button className="btn-primary btn-glow" onClick={onStart}>
           Open My Surprise 🎁
@@ -197,7 +248,6 @@ function WelcomeScreen({ onStart }) {
     </main>
   );
 }
-
 /* ── Redeem Screen ── */
 
 function RedeemScreen({ tokens, usedCodes, onRedeem, onPlay }) {
@@ -232,7 +282,6 @@ function RedeemScreen({ tokens, usedCodes, onRedeem, onPlay }) {
     setFeedback({ type: 'ok', msg: `+${amount} tokens! 🎉` });
     setInput('');
   }
-
   const remaining = CONFIG.codes.length - usedCodes.length;
 
   return (
@@ -279,51 +328,72 @@ function RedeemScreen({ tokens, usedCodes, onRedeem, onPlay }) {
     </main>
   );
 }
-
 /* ── Gacha Screen ── */
 
 function GachaScreen({ tokens, onPull, result, setResult, closeResult, onRedeem, readCount }) {
-  return (
-    <main className="page">
-      <section className="gacha-section">
-        <p className="eyebrow eyebrow--love">for you, {CONFIG.herName.toLowerCase()}</p>
-        <h1>Turn the Dial 💕</h1>
+  const [tab, setTab] = useState('machine');
 
-        <div className="gacha-topbar">
-          <TokenBadge count={tokens} />
-          {readCount > 0 && (
-            <div className="read-counter">
-              💌 {readCount} love note{readCount === 1 ? '' : 's'} read
+  return (
+    <main className="page gacha-page">
+      {/* ── Tab bar ── */}
+      <div className="tab-bar">
+        <button className={`tab-btn ${tab === 'machine' ? 'tab-btn--active' : ''}`}
+                onClick={() => { playClick(); setTab('machine'); }}>
+          🎰 Machine
+        </button>
+        <button className={`tab-btn ${tab === 'story' ? 'tab-btn--active' : ''}`}
+                onClick={() => { playClick(); setTab('story'); }}>
+          💬 Our Story
+        </button>
+      </div>
+
+      {tab === 'machine' && (
+        <section className="gacha-section">
+          <p className="eyebrow eyebrow--love">for you, {CONFIG.herName.toLowerCase()}</p>
+          <h1>Turn the Dial 💕</h1>
+
+          <div className="gacha-topbar">
+            <TokenBadge count={tokens} />
+            {readCount > 0 && (
+              <div className="read-counter">
+                💌 {readCount} love note{readCount === 1 ? '' : 's'} read
+              </div>
+            )}
+          </div>
+
+          <div className="machine-area">
+            <Machine
+              data={MACHINE_DATA}
+              tokens={tokens}
+              onPull={onPull}
+              onResult={setResult}
+              resultVisible={!!result}
+            />
+          </div>
+
+          {tokens === 0 && !result && (
+            <div className="no-tokens-nudge">
+              <p>Out of tokens! 🥺</p>
+              <p className="nudge-sub">Got another code from your special someone?</p>
+              <button className="btn-primary" onClick={onRedeem}>
+                Redeem Another Code 🪙
+              </button>
             </div>
           )}
-        </div>
-
-        <div className="machine-area">
-          <Machine
-            data={MACHINE_DATA}
-            tokens={tokens}
-            onPull={onPull}
-            onResult={setResult}
-            resultVisible={!!result}
-          />
-        </div>
-
-        {tokens === 0 && !result && (
-          <div className="no-tokens-nudge">
-            <p>Out of tokens! 🥺</p>
-            <p className="nudge-sub">Got another code from your special someone?</p>
-            <button className="btn-primary" onClick={onRedeem}>
-              Redeem Another Code 🪙
+          {tokens > 0 && (
+            <button className="btn-secondary" onClick={onRedeem}>
+              + Redeem More Codes
             </button>
-          </div>
-        )}
+          )}
+        </section>
+      )}
 
-        {tokens > 0 && (
-          <button className="btn-secondary" onClick={onRedeem}>
-            + Redeem More Codes
-          </button>
-        )}
-      </section>
+      {tab === 'story' && (
+        <section className="story-section">
+          <FirstDMSection />
+          <MilestoneTimeline />
+        </section>
+      )}
 
       {result && (
         <div className="overlay" onClick={closeResult}>
@@ -344,7 +414,62 @@ function GachaScreen({ tokens, onPull, result, setResult, closeResult, onRedeem,
     </main>
   );
 }
+/* ── First DM Conversation Recreation ── */
 
+function FirstDMSection() {
+  if (!CONFIG.firstDM || CONFIG.firstDM.length === 0) return null;
+
+  return (
+    <section className="firstdm-section">
+      <p className="eyebrow eyebrow--love">where it all started</p>
+      <h2 className="section-title">Our First DMs 💬</h2>
+      <div className="dm-thread">
+        {CONFIG.firstDM.map((msg, i) => (
+          <div key={i} className={`dm-row dm-row--${msg.user}`}>
+            <div className="dm-avatar">
+              {msg.user === 'him' ? '💀' : '🐶'}
+            </div>
+            <div className="dm-content">
+              <div className="dm-header">
+                <span className="dm-name">{msg.name}</span>
+                <span className="dm-time">{msg.time}</span>
+              </div>
+              <p className="dm-text">{msg.text}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+/* ── Milestone Timeline ── */
+
+function MilestoneTimeline() {
+  if (!CONFIG.milestones || CONFIG.milestones.length === 0) return null;
+
+  return (
+    <section className="timeline-section">
+      <p className="eyebrow eyebrow--love">our story so far</p>
+      <h2 className="section-title">Milestones 💗</h2>
+      <div className="timeline">
+        {CONFIG.milestones.map((m, i) => {
+          const d = new Date(m.date + 'T00:00:00');
+          const label = d.toLocaleDateString('en-MY', { month: 'short', day: 'numeric' });
+          return (
+            <div key={i} className="tl-item">
+              <div className="tl-dot">{m.emoji}</div>
+              <div className="tl-card">
+                <span className="tl-date">{label}</span>
+                <span className="tl-title">{m.title}</span>
+                <span className="tl-sub">{m.subtitle}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 /* ── Secret Message Overlay (after reading ALL messages) ── */
 
 function SecretOverlay({ onClose }) {

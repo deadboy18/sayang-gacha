@@ -18,12 +18,47 @@ const CONFIG = {
 
   welcomeEmoji: "💌",
   welcomeSubtitle: "you have a love letter",
-  welcomeBody:
-    `Hi Mabel 🤍\n\n` +
+  welcomeBody:    `Hi Mabel 🤍\n\n` +
     `I hid little love notes inside this gacha machine just for you.\n` +
     `Use the secret codes I gave you to get tokens,\n` +
     `then turn the dial to discover what's inside each capsule.\n\n` +
     `Every single one is from my heart to yours.`,
+
+  /* ── Important date ────────────────────────── *
+   *  The date of your first ever message.         *
+   *  Used for the "days since" counter.           */
+
+  firstMessageDate: "2026-06-29",
+
+  /* ── First DM conversation ─────────────────── *
+   *  Recreation of your first ever chat.          *
+   *  Each entry: { user, name, time, text }       */
+
+  firstDM: [
+    { user: "him",  name: "deadboy69420",   time: "Jun 29, 2:56 PM",
+      text: "Hi, 👋 saw ur post I'm from Penang too" },
+    { user: "him",  name: "deadboy69420",   time: "Jun 29, 3:11 PM",
+      text: "Understood the Batu kawan joke btw" },
+    { user: "her",  name: "Flimsy-Dog-5043", time: "Jul 3, 7:23 AM",
+      text: "Good morning dead man walking.\nHow dead dead are you?\nThank you for understanding my lame ass joke\nHow old are you btw" },
+    { user: "him",  name: "deadboy69420",   time: "Jul 3, 1:20 PM",
+      text: "Good afternoon hi\nhaha i'm a fan of lame jokes myself\nand dad jokes\nnot a dad\ni'm 26 btw\nhow old are you?\nhow dead dead am i? idk everyone started calling me deadboy coz i'm fixing stuff always just by feeling or hearing the odd sounds and they said i have a sixth sense 💀" },
+  ],
+  /* ── Milestone timeline ────────────────────── *
+   *  Key moments in your relationship.            *
+   *  { date, emoji, title, subtitle }             */
+
+  milestones: [
+    { date: "2026-06-29", emoji: "👋", title: "First DM",           subtitle: "\"Hi, saw ur post I'm from Penang too\"" },
+    { date: "2026-07-03", emoji: "💬", title: "She Replied",        subtitle: "\"Good morning dead man walking\"" },
+    { date: "2026-07-15", emoji: "🍣", title: "First Lunch",        subtitle: "Sushi Zanmai ~ she paid and he fell" },
+    { date: "2026-08-04", emoji: "💕", title: "Mutual Confession",  subtitle: "Both said it out loud" },
+    { date: "2026-08-06", emoji: "📞", title: "First Late Night Call", subtitle: "41 minutes at 1AM" },
+    { date: "2026-08-12", emoji: "🤍", title: "First \"Sayang\"",   subtitle: "She said it. He replayed it all day." },
+    { date: "2026-08-22", emoji: "🤝", title: "First Public Outing", subtitle: "Walking together, no hiding" },
+    { date: "2026-09-04", emoji: "🏠", title: "First Sleepover",    subtitle: "Sep 4~5 ~ \"I felt safe\"" },
+    { date: "2026-09-05", emoji: "🔥", title: "\"I'm your hot gf?\"", subtitle: "Yes. The answer was always yes." },
+  ],
 
   /* ── Coupon codes ──────────────────────────── *
    *  Add as many as you want.                    *
@@ -46,14 +81,12 @@ const CONFIG = {
     { code: "BUDAK",        tokens: 2 },
     { code: "ISYANGYOU",    tokens: 5 },
   ],
-
   /* ── Messages inside the capsules ──────────── *
    *  Add as many as you want (no limit).         *
    *  They cycle through capsule colours auto.    *
    *  Use {name} anywhere to insert her name.     */
 
   messages: [
-    // the real ones — from your story
     "You told me first. Before anyone else. That night, I knew this was real. 🤍",
     "I still think about that first lunch at Sushi Zanmai. You paid and I fell. 🍣",
     "{name}, you called me sayang for the first time on the 12th. I replayed it in my head all day. 💗",
