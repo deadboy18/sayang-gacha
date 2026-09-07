@@ -152,7 +152,6 @@ If you want persistence, add `localStorage` support for `tokens`, `usedCodes`, a
 
 ## Ideas for Extending
 
-- **Sound effects** - Add coin sounds on redeem, rattle on shake, pop on capsule open (put `.mp3` files in `public/sounds/`)
 - **Date lock** - Lock the app until a specific date (birthday, anniversary) with a countdown timer
 - **Custom capsule art** - Replace the PNGs in `public/pictures/` (transparent PNG, ~200-400px wide)
 - **localStorage** - Persist state across refreshes so she can come back to it
